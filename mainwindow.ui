@@ -150,20 +150,20 @@
           <item>
            <widget class="QSpinBox" name="sbxot">
             <property name="minimum">
-             <number>0</number>
+             <number>-99</number>
             </property>
             <property name="maximum">
              <number>99</number>
             </property>
             <property name="value">
-             <number>10</number>
+             <number>-10</number>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QSpinBox" name="sbxdo">
             <property name="minimum">
-             <number>0</number>
+             <number>-99</number>
             </property>
             <property name="maximum">
              <number>99</number>
@@ -190,17 +190,17 @@
           <item>
            <widget class="QSpinBox" name="sbyot">
             <property name="minimum">
-             <number>0</number>
+             <number>-99</number>
             </property>
             <property name="value">
-             <number>10</number>
+             <number>-10</number>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QSpinBox" name="sbydo">
             <property name="minimum">
-             <number>0</number>
+             <number>-99</number>
             </property>
             <property name="value">
              <number>10</number>
@@ -230,7 +230,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox">
+         <widget class="QDoubleSpinBox" name="sbtoch">
           <property name="decimals">
            <number>3</number>
           </property>
@@ -285,6 +285,11 @@
          <height>387</height>
         </rect>
        </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);
+color: rgb(51, 51, 51);
+font-size:15px;</string>
+       </property>
       </widget>
      </widget>
     </item>
@@ -316,7 +321,7 @@
   </action>
   <action name="about">
    <property name="text">
-    <string>Об авторе</string>
+    <string>О программе</string>
    </property>
    <property name="toolTip">
     <string>О программе</string>

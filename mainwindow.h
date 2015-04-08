@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "muParser/muParser.h"
 
 namespace Ui {
 class MainWindow;
@@ -17,14 +18,15 @@ public:
 
 private slots:
     void on_bstart_clicked();
-
-private slots:
     void clearscroll();
-private slots:
     void showAbout();
 
 private:
     Ui::MainWindow *ui;
+    mu::Parser p;
+    double result;
+    QString result_buffer;
+    QString expression;
 };
 
 #endif // MAINWINDOW_H
