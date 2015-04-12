@@ -106,9 +106,61 @@ void MainWindow::on_bstart_clicked()
         QString oldrez = rez->text();
         rez->setText(oldrez+"\nВыбран метод дихотомии");
         QTableWidget * tabledihot = new QTableWidget;
-        tabledihot->setColumnCount(5);
-        tabledihot->setRowCount(10);
-        tabledihot->setHorizontalHeaderLabels(QStringList()<< "n"<<"a"<<"b"<<"Xn=(a+b)/2"<<"f(Xn)");
+        tabledihot->setColumnCount(4);
+        tabledihot->setRowCount(1);
+        tabledihot->setHorizontalHeaderLabels(QStringList()<<"a"<<"b"<<"Xn=(a+b)/2"<<"b-Xn");
+//Insert in table
+        double a = rasot;
+        double b =rasdo;
+        int ni = 0;
+        double razbixn = 0;
+        double xn;
+        do{
+            xn = (a+b)/2;
+            //f ot b
+            QString exprb = expression;
+            exprb.replace("x",QString::number(b));
+            mu::string_type exprb_buffer;
+            QByteArray exprb_array = exprb.toLocal8Bit();
+            char *exprb_chars = exprb_array.data();
+            exprb_buffer = exprb_chars;
+            p.SetExpr(exprb_buffer);
+            double fb = p.Eval();
+
+            //f ot xn
+            QString exprxn = expression;
+            exprxn.replace("x",QString::number(xn));
+            mu::string_type exprxn_buffer;
+            QByteArray exprxn_array = exprxn.toLocal8Bit();
+            char *exprxn_chars = exprxn_array.data();
+            exprxn_buffer = exprxn_chars;
+            p.SetExpr(exprxn_buffer);
+            double fxn = p.Eval();
+            razbixn = b-xn;
+            tabledihot->setRowCount(ni+1);
+            QTableWidgetItem * itma = new QTableWidgetItem;
+            QTableWidgetItem * itmb = new QTableWidgetItem;
+            QTableWidgetItem * itmxn = new QTableWidgetItem;
+            QTableWidgetItem * itmrazbixn = new QTableWidgetItem;
+            itma->setText(QString::number(a));
+            itmb->setText(QString::number(b));
+            itmxn->setText(QString::number(xn));
+            itmrazbixn->setText(QString::number(razbixn));
+            tabledihot->setItem(ni, 0, itma);
+            tabledihot->setItem(ni, 1, itmb);
+            tabledihot->setItem(ni, 2, itmxn);
+            tabledihot->setItem(ni, 3, itmrazbixn);
+            if((fb*fxn)<0)
+            {
+                a = xn;
+            }
+            else
+            {
+                b = xn;
+            }
+            ni++;
+        }while (razbixn > sbtoch);
+
         //Убираю скролл у таблицы
         int ht = (tabledihot->model()->rowCount()-1)+tabledihot->horizontalHeader()->height();
         int wt = (tabledihot->model()->columnCount()-1)+tabledihot->verticalHeader()->width();
@@ -118,33 +170,11 @@ void MainWindow::on_bstart_clicked()
         wt = wt + tabledihot->columnWidth(column);
         tabledihot->setMinimumHeight(ht);
         tabledihot->setMinimumWidth(wt);
-
-        int ni = 0;
-        double fxn =10;
-        int xn;
-        QTableWidgetItem * itmn = new QTableWidgetItem;
-        QTableWidgetItem * itma = new QTableWidgetItem;
-        QTableWidgetItem * itmb = new QTableWidgetItem;
-        QTableWidgetItem * itmxn = new QTableWidgetItem;
-        QTableWidgetItem * itmfxn = new QTableWidgetItem;
-        do{
-//        if()
-        xn = (rasot+rasdo)/2;
-        fxn = fxn/10;
-        itmn->setText(QString::number(ni));
-        itma->setText(QString::number(rasot));
-        itmb->setText(QString::number(rasdo));
-        itmxn->setText(QString::number(xn));
-        itmfxn->setText(QString::number(fxn));
-        tabledihot->setItem(ni, 1, itmn);
-        tabledihot->setItem(ni, 2, itma);
-        tabledihot->setItem(ni, 3, itmb);
-        tabledihot->setItem(ni, 4, itmxn);
-        tabledihot->setItem(ni, 5, itmfxn);
-        ni++;
-        }
-        while (fxn > sbtoch);
         lay->addWidget(tabledihot);
+        QLabel * rezend = new QLabel;
+        rezend->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        rezend->setText("Искомый корень x≈"+QString::number(xn)+" Вычисления проводились с точностью "+QString::number(sbtoch));
+        lay->addWidget(rezend);
     }
 
     ui->scrollContents->setLayout(lay);
