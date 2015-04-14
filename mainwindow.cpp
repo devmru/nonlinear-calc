@@ -244,6 +244,10 @@ void MainWindow::on_bstart_clicked()
         }
         break;
         }
+    case 2:{
+
+            break;
+        }
     }
     ui->scrollContents->setLayout(lay);
     }
