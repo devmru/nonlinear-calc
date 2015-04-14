@@ -9,6 +9,27 @@
 #include <QAction>
 #include <QDebug>
 #include <QTableWidget>
+//Вычисление функции
+double MainWindow::fun(double x){
+    QString f = expression;
+    QString z = QString::number(x);
+    f.replace("x","("+z+")");
+    f.replace("e","_e");
+    mu::string_type expression_buffer;
+    QByteArray expression_array = f.toLocal8Bit();
+    char *expression_chars = expression_array.data();
+    expression_buffer = expression_chars;
+    p.SetExpr(expression_chars);
+    return p.Eval();
+}
+//Первая производная
+double MainWindow::derv1_f(double x,double exp){
+    return (fun(x+exp)-fun(x))/exp;
+}
+//Вторая производная
+double MainWindow::derv2_f(double x,double exp){
+    return ((fun(x + exp) - fun((x + exp) + exp))/((x + exp) - ((x + exp) + exp)) - (fun(x) - fun(x+exp))/(x - (x + exp)))/exp;
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -53,19 +74,10 @@ void MainWindow::on_bstart_clicked()
     QVector<double> xi(nitr), yi(nitr); // для гладкости)
     for (int i=0; i<nitr; ++i)
     {
-      xi[i] = i/10.0-abs(xot);
+      xi[i] =(i/10.0)-abs(xot);
       try
       {
-      QString f = expression;
-      double x = i/10.0-abs(xot);
-      QString z = QString::number(x);
-      f.replace("x",z);
-      mu::string_type expression_buffer;
-      QByteArray expression_array = f.toLocal8Bit();
-      char *expression_chars = expression_array.data();
-      expression_buffer = expression_chars;
-      p.SetExpr(expression_buffer);
-      yi[i] = p.Eval(); //Подсчитанное решение
+      yi[i] = fun(i/10.0-abs(xot));
       }
       catch(mu::Parser::exception_type &e)
       {
@@ -75,21 +87,9 @@ void MainWindow::on_bstart_clicked()
           QMessageBox messageBox;
           messageBox.critical(0,"Ошибка","Произошла ошибка!");
           messageBox.setFixedSize(500,200);
-          break;
+          return;
       }
     }
-
-//    QVector<double> Ticks;  // шаг
-//    int i = -10;
-//    while(i<=10) {
-//        Ticks << i;
-//        i+=1;
-//    }
-//    graf->xAxis->setAutoTicks(false); // выключаем автоматические отсчеты
-//    graf->xAxis->setTickVector(Ticks);  // задаем созданный нами вектор
-//    graf->yAxis->setAutoTicks(false); // выключаем автоматические отсчеты
-//    graf->yAxis->setTickVector(Ticks);  // задаем созданный нами вектор
-
     // создаем график и добавляем данные:
     graf->addGraph();
     graf->setAttribute(Qt::WA_NoMousePropagation, false);
@@ -102,14 +102,15 @@ void MainWindow::on_bstart_clicked()
     graf->yAxis->setRange(yot, ydo);
     graf->replot();
 
-    if(cbmetod==0){
+    switch (cbmetod) {
+    case 0:{
         QString oldrez = rez->text();
         rez->setText(oldrez+"\nВыбран метод дихотомии");
         QTableWidget * tabledihot = new QTableWidget;
         tabledihot->setColumnCount(4);
         tabledihot->setRowCount(1);
         tabledihot->setHorizontalHeaderLabels(QStringList()<<"a"<<"b"<<"Xn=(a+b)/2"<<"b-Xn");
-//Insert in table
+        //Insert in table
         double a = rasot;
         double b =rasdo;
         int ni = 0;
@@ -117,25 +118,9 @@ void MainWindow::on_bstart_clicked()
         double xn;
         do{
             xn = (a+b)/2;
-            //f ot b
-            QString exprb = expression;
-            exprb.replace("x",QString::number(b));
-            mu::string_type exprb_buffer;
-            QByteArray exprb_array = exprb.toLocal8Bit();
-            char *exprb_chars = exprb_array.data();
-            exprb_buffer = exprb_chars;
-            p.SetExpr(exprb_buffer);
-            double fb = p.Eval();
+            double fb = fun(b);
+            double fxn = fun(xn);
 
-            //f ot xn
-            QString exprxn = expression;
-            exprxn.replace("x",QString::number(xn));
-            mu::string_type exprxn_buffer;
-            QByteArray exprxn_array = exprxn.toLocal8Bit();
-            char *exprxn_chars = exprxn_array.data();
-            exprxn_buffer = exprxn_chars;
-            p.SetExpr(exprxn_buffer);
-            double fxn = p.Eval();
             razbixn = b-xn;
             tabledihot->setRowCount(ni+1);
             QTableWidgetItem * itma = new QTableWidgetItem;
@@ -175,11 +160,53 @@ void MainWindow::on_bstart_clicked()
         rezend->setTextInteractionFlags(Qt::TextSelectableByMouse);
         rezend->setText("Искомый корень x≈"+QString::number(xn)+" Вычисления проводились с точностью "+QString::number(sbtoch));
         lay->addWidget(rezend);
-    }
+        break;}
+    case 1:{
+        QString otvet;
+        double x0;
+        QString oldrez = rez->text();
+        if (fun(rasot)==0) {
+            otvet = "\nПоскольку F("+QString::number(rasot)+")=0, то корень x=0";
+            rez->setText(oldrez+"\nВыбран метод Ньютона(касательных)"+otvet);
+            break;
+        }
+        else if (fun(rasdo)==0) {
+            otvet = "\nПоскольку F("+QString::number(rasdo)+")=0, то корень x=0";
+            rez->setText(oldrez+"\nВыбран метод Ньютона(касательных)"+otvet);
+            break;
+        }
+        if (fun(rasot)*fun(rasdo)>0) {
+            otvet = "\nf("+QString::number(rasot)+")="+QString::number(fun(rasot))+""
+                    "\nf("+QString::number(rasdo)+")="+QString::number(fun(rasdo))+""
+                    "\nВ данном интервале ["+QString::number(rasot)+";"+QString::number(rasdo)+"] нет корней, так как"
+                      " ("+QString::number(fun(rasot))+"*"+QString::number(fun(rasdo))+">0)";
 
+        }
+        else if (fun(rasot)*fun(rasdo)<0) {
+            otvet = "\nПоскольку f("+QString::number(rasot)+")*f("+QString::number(rasdo)+")<0, то корень лежит в пределах ["+QString::number(rasot)+";"+QString::number(rasdo)+"]"
+                    "\nВычисляем занчения функции в точке а="+QString::number(rasot)+""
+                    "\nf("+QString::number(rasot)+")="+QString::number(fun(rasot))+""
+                    "\nf''("+QString::number(rasot)+")="+QString::number(derv2_f(rasot,sbtoch));
+            if (fun(rasot)*derv2_f(rasot,sbtoch)>0) {
+                otvet = otvet+"\nПоскольку f(a)*f''(a)>0, то x0=a="+QString::number(rasot);
+                x0 =rasot;
+            }
+            else if (fun(rasot)*derv2_f(rasot,sbtoch)<0) {
+                otvet = otvet+"\nПоскольку f(a)*f''(a)>0, то x0=b="+QString::number(rasdo);
+                x0 =rasdo;
+            }
+
+        }
+//        otvet = "\nF1="+QString::number(fun(rasot))+" F2="+QString::number(fun(rasdo));
+
+        rez->setText(oldrez+"\nВыбран метод Ньютона(касательных)"+otvet);
+        break;
+    }
+    }
     ui->scrollContents->setLayout(lay);
     }
 }
+
 void MainWindow::clearscroll()
 {
       qDeleteAll(ui->scrollContents->children());

@@ -27,6 +27,9 @@ private:
     double result;
     QString result_buffer;
     QString expression;
+    double fun(double x);
+    double derv1_f(double x,double exp);
+    double derv2_f(double x,double exp);
 };
 
 #endif // MAINWINDOW_H
