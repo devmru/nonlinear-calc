@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     connect(ui->newras, SIGNAL(triggered()), this, SLOT(clearscroll()));
     connect(ui->about, SIGNAL(triggered()), this, SLOT(showAbout()));
+    ui->sbtoch->setMinimum(0.00001);
 }
 
 MainWindow::~MainWindow()
@@ -101,15 +102,16 @@ void MainWindow::on_bstart_clicked()
     graf->xAxis->setRange(xot, xdo);
     graf->yAxis->setRange(yot, ydo);
     graf->replot();
-
     switch (cbmetod) {
     case 0:{
         QString oldrez = rez->text();
         rez->setText(oldrez+"\nВыбран метод дихотомии");
-        QTableWidget * tabledihot = new QTableWidget;
-        tabledihot->setColumnCount(4);
-        tabledihot->setRowCount(1);
-        tabledihot->setHorizontalHeaderLabels(QStringList()<<"a"<<"b"<<"Xn=(a+b)/2"<<"b-Xn");
+        //Table
+        QTableWidget * trez = new QTableWidget;
+        trez->setColumnCount(4);
+        trez->setRowCount(1);
+        trez->setStyleSheet("border:none");
+        trez->setHorizontalHeaderLabels(QStringList()<<"a"<<"b"<<"Xn=(a+b)/2"<<"b-Xn");
         //Insert in table
         double a = rasot;
         double b =rasdo;
@@ -120,9 +122,8 @@ void MainWindow::on_bstart_clicked()
             xn = (a+b)/2;
             double fb = fun(b);
             double fxn = fun(xn);
-
             razbixn = b-xn;
-            tabledihot->setRowCount(ni+1);
+            trez->setRowCount(ni+1);
             QTableWidgetItem * itma = new QTableWidgetItem;
             QTableWidgetItem * itmb = new QTableWidgetItem;
             QTableWidgetItem * itmxn = new QTableWidgetItem;
@@ -131,10 +132,10 @@ void MainWindow::on_bstart_clicked()
             itmb->setText(QString::number(b));
             itmxn->setText(QString::number(xn));
             itmrazbixn->setText(QString::number(razbixn));
-            tabledihot->setItem(ni, 0, itma);
-            tabledihot->setItem(ni, 1, itmb);
-            tabledihot->setItem(ni, 2, itmxn);
-            tabledihot->setItem(ni, 3, itmrazbixn);
+            trez->setItem(ni, 0, itma);
+            trez->setItem(ni, 1, itmb);
+            trez->setItem(ni, 2, itmxn);
+            trez->setItem(ni, 3, itmrazbixn);
             if((fb*fxn)<0)
             {
                 a = xn;
@@ -145,17 +146,16 @@ void MainWindow::on_bstart_clicked()
             }
             ni++;
         }while (razbixn > sbtoch);
-
-        //Убираю скролл у таблицы
-        int ht = (tabledihot->model()->rowCount()-1)+tabledihot->horizontalHeader()->height();
-        int wt = (tabledihot->model()->columnCount()-1)+tabledihot->verticalHeader()->width();
-        for(int row = 0; row < tabledihot->model()->rowCount(); row++)
-        ht = ht + tabledihot->rowHeight(row);
-        for(int column = 0; column < tabledihot->model()->columnCount(); column++)
-        wt = wt + tabledihot->columnWidth(column);
-        tabledihot->setMinimumHeight(ht);
-        tabledihot->setMinimumWidth(wt);
-        lay->addWidget(tabledihot);
+        //Убираю скролл у таблиц
+        int ht = (trez->model()->rowCount()-1)+trez->horizontalHeader()->height();
+        int wt = (trez->model()->columnCount()-1)+trez->verticalHeader()->width();
+        for(int row = 0; row < trez->model()->rowCount(); row++)
+        ht = ht + trez->rowHeight(row);
+        for(int column = 0; column < trez->model()->columnCount(); column++)
+        wt = wt + trez->columnWidth(column);
+        trez->setMinimumHeight(ht);
+        trez->setMinimumWidth(wt);
+        lay->addWidget(trez);
         QLabel * rezend = new QLabel;
         rezend->setTextInteractionFlags(Qt::TextSelectableByMouse);
         rezend->setText("Искомый корень x≈"+QString::number(xn)+" Вычисления проводились с точностью "+QString::number(sbtoch));
@@ -166,12 +166,12 @@ void MainWindow::on_bstart_clicked()
         double x0;
         QString oldrez = rez->text();
         if (fun(rasot)==0) {
-            otvet = "\nПоскольку F("+QString::number(rasot)+")=0, то корень x=0";
+            otvet = "\nПоскольку F("+QString::number(rasot)+")=0, то корень x="+QString::number(rasot);
             rez->setText(oldrez+"\nВыбран метод Ньютона(касательных)"+otvet);
             break;
         }
         else if (fun(rasdo)==0) {
-            otvet = "\nПоскольку F("+QString::number(rasdo)+")=0, то корень x=0";
+            otvet = "\nПоскольку F("+QString::number(rasdo)+")=0, то корень x="+QString::number(rasdo);
             rez->setText(oldrez+"\nВыбран метод Ньютона(касательных)"+otvet);
             break;
         }
@@ -180,6 +180,8 @@ void MainWindow::on_bstart_clicked()
                     "\nf("+QString::number(rasdo)+")="+QString::number(fun(rasdo))+""
                     "\nВ данном интервале ["+QString::number(rasot)+";"+QString::number(rasdo)+"] нет корней, так как"
                       " ("+QString::number(fun(rasot))+"*"+QString::number(fun(rasdo))+">0)";
+            rez->setText(oldrez+"\nВыбран метод Ньютона(касательных)"+otvet);
+            break;
 
         }
         else if (fun(rasot)*fun(rasdo)<0) {
@@ -195,25 +197,63 @@ void MainWindow::on_bstart_clicked()
                 otvet = otvet+"\nПоскольку f(a)*f''(a)>0, то x0=b="+QString::number(rasdo);
                 x0 =rasdo;
             }
-
+            rez->setText(oldrez+"\nВыбран метод Ньютона(касательных)"+otvet);
+            //Table
+            QTableWidget * trez = new QTableWidget;
+            trez->setColumnCount(4);
+            trez->setRowCount(1);
+            trez->setStyleSheet("border:none");
+            trez->setHorizontalHeaderLabels(QStringList()<<"x"<<"f(x)"<<"f'(x)"<<"f(x)/f'(x)");
+            double xn=x0,fx,dfx,h,x;
+            int ni=0;
+            do{
+                fx=fun(xn);
+                dfx=derv1_f(xn,sbtoch);
+                h=fx/dfx;
+                trez->setRowCount(ni+1);
+                QTableWidgetItem * itmxn = new QTableWidgetItem;
+                QTableWidgetItem * itmfx = new QTableWidgetItem;
+                QTableWidgetItem * itmdfx = new QTableWidgetItem;
+                QTableWidgetItem * itmh = new QTableWidgetItem;
+                itmxn->setText(QString::number(xn));
+                itmfx->setText(QString::number(fx));
+                itmdfx->setText(QString::number(dfx));
+                itmh->setText(QString::number(h));
+                trez->setItem(ni, 0, itmxn);
+                trez->setItem(ni, 1, itmfx);
+                trez->setItem(ni, 2, itmdfx);
+                trez->setItem(ni, 3, itmh);
+                x=xn;
+                xn=xn-h;
+                ni++;
+            }while (fabs(h)>sbtoch);
+            //Убираю скролл у таблиц
+            int ht = (trez->model()->rowCount()-1)+trez->horizontalHeader()->height();
+            int wt = (trez->model()->columnCount()-1)+trez->verticalHeader()->width();
+            for(int row = 0; row < trez->model()->rowCount(); row++)
+            ht = ht + trez->rowHeight(row);
+            for(int column = 0; column < trez->model()->columnCount(); column++)
+            wt = wt + trez->columnWidth(column);
+            trez->setMinimumHeight(ht);
+            trez->setMinimumWidth(wt);
+            lay->addWidget(trez);
+            QLabel * rezend = new QLabel;
+            rezend->setTextInteractionFlags(Qt::TextSelectableByMouse);
+            rezend->setText("Искомый корень x≈"+QString::number(x)+" Вычисления проводились с точностью "+QString::number(sbtoch));
+            lay->addWidget(rezend);
         }
-//        otvet = "\nF1="+QString::number(fun(rasot))+" F2="+QString::number(fun(rasdo));
-
-        rez->setText(oldrez+"\nВыбран метод Ньютона(касательных)"+otvet);
         break;
-    }
+        }
     }
     ui->scrollContents->setLayout(lay);
     }
 }
 
-void MainWindow::clearscroll()
-{
+void MainWindow::clearscroll(){
       qDeleteAll(ui->scrollContents->children());
       ui->scrollContents->resize(0,0);
 }
-void MainWindow::showAbout()
-{
+void MainWindow::showAbout(){
     QDialog *Dialog = new QDialog(this);
     QGridLayout *gridLayout;
     QDialogButtonBox *buttonBox;
